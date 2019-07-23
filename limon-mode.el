@@ -283,20 +283,37 @@
      
        ;; RULE 2
        ((let ((prev-char (last-char-before-whitespace))) ;; Last char before whitespace.
-	       (string= (char-to-string (char-syntax prev-char)) "(")) ;; is an openning delimiter
+	       (or (string= (char-to-string (char-syntax prev-char)) "(") ;; is an openning delimiter
+              (char-equal prev-char ?#))) ;; [# behaves like openning delimiter
         (let ((base-col
 	            (save-excursion
 	              (backward-up-list)
 	              (if (eq (ignore-errors
-			                  (backward-up-list)) nil) ;; No matching paren
+			                  (backward-up-list)
+                           t) nil) ;; No matching paren
 		               0
 		             (progn
 		               (down-list) (forward-sexp)
 		               (backward-sexp) (current-column))))))
 	       (indent-line-to (+ tab-width base-col))
           (setq new-col (current-indentation))))
-	   
-     
+
+       ;; RULE 4
+
+       ;; RULE 3
+       (t
+        (let ((base-col
+	            (save-excursion
+	              (if (eq (ignore-errors
+			                  (backward-up-list)
+                           t) nil) ;; No matching paren
+		               0
+		             (progn
+		               (down-list) (forward-sexp)
+		               (backward-sexp) (current-column))))))
+	       (indent-line-to base-col)
+          (setq new-col (current-indentation))))
+       
        ;; Default, indent as previous line.
        (t
         (let ((prev-line-indent

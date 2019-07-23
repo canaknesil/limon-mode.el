@@ -1,4 +1,5 @@
 def
+
 __sizeof__
 
 
@@ -52,6 +53,17 @@ ASd sdff :my_sym
 Multiline comment
 */
 
+def a = @() {
+   ([istrue] ?
+    asdf)
+   }
+
+
+
+
+
+
+          
 
 
 
