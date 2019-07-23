@@ -1,6 +1,8 @@
+
 ;;
 ;; UTILITY
 ;;
+
 (defun set-char-table-range-list (range-list table)
   (mapcar (lambda (range)
 	    (set-char-table-range table
@@ -8,15 +10,20 @@
 				  (string-to-syntax (cdr range))))
 	  range-list))
 
+(defun last-char-before-whitespace-helper ()
+  (if (bobp) nil
+    (let ((c (char-after)))
+      (if (or (string= (char-to-string (char-syntax c)) " ")
+		        (char-equal c ?\n))
+          (progn
+            (backward-char)
+            (last-char-before-whitespace-helper))
+        c))))
+      
+
 (defun last-char-before-whitespace ()
   (save-excursion
-    (backward-char)
-    (let ((c (char-after)))
-      (while (or (string= (char-to-string (char-syntax c)) " ")
-		 (char-equal c ?\n))
-	(backward-char)
-	(setq c (char-after)))
-      c)))
+    (last-char-before-whitespace-helper)))
 
   
 ;;
