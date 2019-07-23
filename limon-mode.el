@@ -235,6 +235,26 @@
 ;; INDENTATION
 ;;
 
+;; Rules (wrt. the beginning of the current line):
+;;
+;; 1 - If the beginning of the buffer, indent to 0.
+;;
+;; 2 - If the token just before the point is an openning parenthesis,
+;; indent one tab forward from the first symbol after the last
+;; unmatched opening parenthesis, or from the beginning of line, if
+;; does not exist.
+;;
+;; 3 - If the token just before the line is NOT an openning
+;; parenthesis, indent same as the first "word" just after the last
+;; unmatched openning parenthesis, or indent to 0, if does not exist.
+;;
+;; 4 - If the first token of the line is a closing paranthesis, indent
+;; same as the first "word" just after the last unmatched openning
+;; paranthesis, except the match of the current one, or indent to 0,
+;; if does not exist.
+
+;; TODO revise and do factorization on this algorithm. 
+
 (defun limon-indent-line ()
   (interactive)
   (save-excursion
