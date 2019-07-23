@@ -55,8 +55,7 @@
      "<"
      ">"
      "&"
-     "|"
-     "!")
+     "|")
    t))
 
 (defconst limon-negation-char
