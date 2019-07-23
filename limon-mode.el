@@ -8,7 +8,17 @@
 				  (string-to-syntax (cdr range))))
 	  range-list))
 
+(defun last-char-before-whitespace ()
+  (save-excursion
+    (backward-char)
+    (let ((c (char-after)))
+      (while (or (string= (char-to-string (char-syntax c)) " ")
+		 (char-equal c ?\n))
+	(backward-char)
+	(setq c (char-after)))
+      c)))
 
+  
 ;;
 ;; SYNTAX TABLE
 ;;
@@ -23,6 +33,7 @@
     ((?a . ?z) . "w")
     ((?A . ?Z) . "w")
     ((?0 . ?9) . "w")
+    (?@ . "w")
 
     ;; Symbol constituents
     (?_ . "_")
@@ -49,7 +60,6 @@
     (?% . ".")
     (?& . ".")
     (?| . ".")
-    (?@ . ".")
     (?? . ".")
     (?: . ".")
     (?# . ".")
@@ -235,6 +245,9 @@
 ;; INDENTATION
 ;;
 
+(setq-default indent-tabs-mode nil) ;; Use spaces
+(setq-default tab-width 3)
+
 ;; Rules (wrt. the beginning of the current line):
 ;;
 ;; 1 - If the beginning of the buffer, indent to 0.
@@ -257,25 +270,46 @@
 
 (defun limon-indent-line ()
   (interactive)
-  (save-excursion
-    (beginning-of-line) ;; Set point to beginning of line.
-
-    (cond
-
-     ;; Beginning of buffer, indent to 0.
-     ((bobp) 
-      (indent-line-to 0))
-
+  (let ((new-col (current-column))) ;; will be set
+    (save-excursion
+      (beginning-of-line) ;; Set point to beginning of line.
+    
+      (cond
      
+       ;; RULE 1: Beginning of buffer, indent to 0.
+       ((bobp) 
+        (indent-line-to 0)
+        (setq new-col (current-indentation)))
      
-     ;; Default, indent as previous line.
-     (t
-      (let ((prev-line-indent
-	     (progn
-	       (forward-line -1) ;; move up
-	       (current-indentation))))
-	(forward-line 1) ;; move down
-	(indent-line-to prev-line-indent))))))	 
+       ;; RULE 2
+       ((let ((prev-char (last-char-before-whitespace))) ;; Last char before whitespace.
+	       (string= (char-to-string (char-syntax prev-char)) "(")) ;; is an openning delimiter
+        (let ((base-col
+	            (save-excursion
+	              (backward-up-list)
+	              (if (eq (ignore-errors
+			                  (backward-up-list)) nil) ;; No matching paren
+		               0
+		             (progn
+		               (down-list) (forward-sexp)
+		               (backward-sexp) (current-column))))))
+	       (indent-line-to (+ tab-width base-col))
+          (setq new-col (current-indentation))))
+	   
+     
+       ;; Default, indent as previous line.
+       (t
+        (let ((prev-line-indent
+	            (progn
+	              (forward-line -1) ;; move up
+	              (current-indentation))))
+	       (forward-line 1) ;; move down
+	       (indent-line-to prev-line-indent)
+          (setq new-col (current-indentation))))))
+
+    ;; Outside save-excursion, indent cursor if blank line
+    (if (looking-at "\\s-*\n")
+        (move-to-column new-col t))))
 	 
       
       
