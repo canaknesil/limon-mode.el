@@ -306,6 +306,24 @@
           (setq new-col (current-indentation))))
 
        ;; RULE 4
+       ((let ((first-char
+               (progn
+                 (back-to-indentation) ;; move point to first non-whitespace char
+                 (char-after))))
+          (string= (char-to-string (char-syntax first-char)) ")"))
+        (let ((base-col
+	            (save-excursion
+                 (backward-char)
+	              (backward-up-list)
+	              (if (eq (ignore-errors
+			                  (backward-up-list)
+                           t) nil) ;; No matching paren
+		               0
+		             (progn
+		               (down-list) (forward-sexp)
+		               (backward-sexp) (current-column))))))
+	       (indent-line-to base-col)
+          (setq new-col (current-indentation))))
 
        ;; RULE 3
        (t
