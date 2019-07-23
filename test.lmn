@@ -1,8 +1,11 @@
 def
 __sizeof__
+
+
 __2str__
 __2char__
 __2int__
+
 __2float__
 while
 run
@@ -28,12 +31,14 @@ null
 1 123
 0b0101
 0xABCDa
-1.2
+1.2 1 1 1
 1.2p100 1.1P100
 0b1.1
 0b1.1p105
 0xA.A
 0xA.Ap45
+"asdf#"
+'a'
 
 test
 test_case
@@ -48,6 +53,6 @@ Multiline comment
 */
 
 
-
 def a = @(a b) {
  [println a b]
+
