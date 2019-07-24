@@ -137,7 +137,9 @@
      "__same__"
      "__make_array__"
      "__array_get__"
-     "__array_set__")
+     "__array_set__"
+     "__string_get__"
+     "__string_set__")
    'symbols))
 
 (defconst limon-warning
@@ -210,8 +212,11 @@
 (defconst limon-constant-float-hex
   "\\_<\\(0x[0-9A-Fa-f]*\\.[0-9A-Fa-f]+\\([pP][1-9][0-9]*\\)?\\)\\_>") ;;symbols
 
- (defconst limon-symbol
-   ":\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)\\_>")
+(defconst limon-symbol
+  ":\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)\\_>")
+
+(defconst limon-colon ;; the remaining colons are keychar
+  ":")
 
 (defconst limon-font-lock-keyword-variable-name 
   (cons "\\_<\\(def\\)\\>\\s-\\_<\\([_a-zA-Z][_a-zA-Z0-9]+\\)\\_>"
@@ -233,6 +238,7 @@
    (cons limon-constant-float-hex 'font-lock-constant-face)
    (cons limon-constant-int 'font-lock-constant-face)
    (cons limon-symbol 'font-lock-type-face)
+   (cons limon-colon 'font-lock-keyword-face)
    limon-font-lock-keyword-variable-name
    (cons limon-negation-char 'font-lock-negation-char-face))
   "Highlighting expressions for Limon mode")
@@ -242,7 +248,6 @@
 ;; INDENTATION
 ;;
 
-(setq-default indent-tabs-mode nil) ;; Use spaces
 (defvar limon-tab-width 3)
 
 ;; Rules (wrt. the beginning of the current line):
@@ -337,9 +342,27 @@
 	       (indent-line-to prev-line-indent)
           (setq new-col (current-indentation))))))
 
-    ;; Outside save-excursion, indent cursor if blank line
-    (if (looking-at "\\s-*\n")
-        (move-to-column new-col t))))
+    ;; Outside save-excursion
+        
+    (cond
+     ;; Indent cursor if blank line
+     ((save-excursion
+        (beginning-of-line)
+        (looking-at "\\s-*\n"))
+      (move-to-column new-col t))
+
+     ;; Remove unnecessary spaces if rest of line empty
+     ((looking-at "\\s-*\n")
+      (just-no-space))
+
+     ;; Move cursor to start of the test if beginning is empty
+     ((looking-back "^\\s-*")
+      (back-to-indentation))
+
+     ;; Don't change cursor position by default
+     (t t))))
+          
+      
 
 
 ;;
