@@ -197,36 +197,27 @@
      "null")
    'symbols))
 
-;; AFTER THIS DOES NOT WORK ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defconst limon-constant-int
-  (regexp-opt
-   '("[0-9]+"
-     "0b[01]+"
-     "0x[0-9A-Fa-f]+")
-   'symbols))
+  "\\_<\\([0-9]+\\|0b[01]+\\|0x[0-9A-Fa-f]+\\)\\_>") ;;symbols
 
 (defconst limon-constant-float
-  "\\<[0-9]*\\.[0-9]+\\([pP][1-9][0-9]*\\)?\\>")
+  "\\_<\\([0-9]*\\.[0-9]+\\([pP][1-9][0-9]*\\)?\\)\\_>") ;;symbols
 
 (defconst limon-constant-float-bin
-  "\\<0b[01]*\\.[01]+\\([pP][1-9][0-9]*\\)?\\>")
+  "\\_<\\(0b[01]*\\.[01]+\\([pP][1-9][0-9]*\\)?\\)\\_>") ;;symbols
 
 (defconst limon-constant-float-hex
-  "\\<0x[0-9A-Fa-f]*\\.[0-9A-Fa-f]+\\([pP][1-9][0-9]*\\)?\\>")
+  "\\_<\\(0x[0-9A-Fa-f]*\\.[0-9A-Fa-f]+\\([pP][1-9][0-9]*\\)?\\)\\_>") ;;symbols
 
-(defconst limon-symbol ;; TODO
-  "\\<\\(:[A-Za-z_][A-Za-z0-9_]*\\)\\>")
+ (defconst limon-symbol
+   ":\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)\\_>")
 
-(defconst limon-variable-name
-  (regexp-opt
-   '("\\(?:def\\s-\\)\\s_")
-   'symbols))
+(defconst limon-font-lock-keyword-variable-name 
+  (cons "\\_<\\(def\\)\\>\\s-\\_<\\([_a-zA-Z][_a-zA-Z0-9]+\\)\\_>"
+        (list 2 'font-lock-variable-name-face t)))
+;; Meaning, 2nd sub expression in regexp, t: override prev highligh
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defconst limon-colon
-  "\\(:\\)")
 
 
 (defconst limon-font-lock-keywords
@@ -237,13 +228,12 @@
    (cons limon-function-name 'font-lock-function-name-face)
    (cons limon-bracket 'font-lock-function-name-face)
    (cons limon-constant-word 'font-lock-constant-face)
-   ;;(cons limon-constant-float 'font-lock-constant-face)
-   ;;(cons limon-constant-float-bin 'font-lock-constant-face)
-   ;;(cons limon-constant-float-hex 'font-lock-constant-face)
+   (cons limon-constant-float 'font-lock-constant-face)
+   (cons limon-constant-float-bin 'font-lock-constant-face)
+   (cons limon-constant-float-hex 'font-lock-constant-face)
    (cons limon-constant-int 'font-lock-constant-face)
-   ;;(cons limon-symbol 'font-lock-type-face)
-   ;;(cons limon-variable-name 'font-lock-variable-name-face)
-   ;;(cons limon-colon 'font-lock-keyword-face)
+   (cons limon-symbol 'font-lock-type-face)
+   limon-font-lock-keyword-variable-name
    (cons limon-negation-char 'font-lock-negation-char-face))
   "Highlighting expressions for Limon mode")
 
@@ -253,7 +243,7 @@
 ;;
 
 (setq-default indent-tabs-mode nil) ;; Use spaces
-(setq-default tab-width 3)
+(defvar limon-tab-width 3)
 
 ;; Rules (wrt. the beginning of the current line):
 ;;
@@ -272,8 +262,6 @@
 ;; same as the first "word" just after the last unmatched openning
 ;; paranthesis, except the match of the current one, or indent to 0,
 ;; if does not exist.
-
-;; TODO revise and do factorization on this algorithm. 
 
 (defun limon-indent-line ()
   (interactive)
@@ -302,7 +290,7 @@
 		             (progn
 		               (down-list) (forward-sexp)
 		               (backward-sexp) (current-column))))))
-	       (indent-line-to (+ tab-width base-col))
+	       (indent-line-to (+ limon-tab-width base-col))
           (setq new-col (current-indentation))))
 
        ;; RULE 4
@@ -352,40 +340,17 @@
     ;; Outside save-excursion, indent cursor if blank line
     (if (looking-at "\\s-*\n")
         (move-to-column new-col t))))
-	 
-      
-      
 
-(defun limon-indent-line-temp ()
-  "Indent current line as WPDL code."
-  (interactive)
-  (beginning-of-line)
-  (if (bobp)
-      (indent-line-to 0)		   ; First line is always non-indented
-    (let ((not-indented t) cur-indent)
-      (if (looking-at "^[ \t]*END_") ; If the line we are looking at is the end of a block, then decrease the indentation
-	  (progn
-	    (save-excursion
-	      (forward-line -1) ;; Move up
-	      (setq cur-indent (- (current-indentation) default-tab-width)))
-	    (if (< cur-indent 0) ; We can't indent past the left margin
-		(setq cur-indent 0)))
-	(save-excursion
-	  (while not-indented ; Iterate backwards until we find an indentation hint
-	    (forward-line -1)
-	    (if (looking-at "^[ \t]*END_") ; This hint indicates that we need to indent at the level of the END_ token
-		(progn
-		  (setq cur-indent (current-indentation))
-		  (setq not-indented nil))
-	      (if (looking-at "^[ \t]*\\(PARTICIPANT\\|MODEL\\|APPLICATION\\|WORKFLOW\\|ACTIVITY\\|DATA\\|TOOL_LIST\\|TRANSITION\\)") ; This hint indicates that we need to indent an extra level
-		  (progn
-		    (setq cur-indent (+ (current-indentation) default-tab-width)) ; Do the actual indenting
-		    (setq not-indented nil))
-		(if (bobp)
-		    (setq not-indented nil)))))))
-      (if cur-indent
-	  (indent-line-to cur-indent)
-	(indent-line-to 0))))) ; If we didn't see an indentation hint, then allow no indentation
+
+;;
+;; OTHER CONFIGURATIONS
+;;
+
+;; For comment|uncomment-region function
+(setq-default comment-start "//")
+(setq-default comment-padding " ")
+(setq-default comment-end "") ;; comment ending with newline
+
 
 
 ;;
