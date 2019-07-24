@@ -1,7 +1,0 @@
-Correct symbol color. Maybe in syntax table.
-
-Implement indentation.
-
-More aware coloring. Different colors for variable definitions than
-references and assignments. Differentiate between conditional
-expression colon and symbol colon.
