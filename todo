@@ -1,0 +1,11 @@
+Error beap after pressing after at the end of a single line comment.
+
+Definition with one letter does not show variable (orange) color.
+
+Definitions inside comments are not green.
+
+Indentation does not cover end of buffer cases.
+
+Indent on enter does not work. Must press tab after enter.
+
+Color of :null symbol is not correct.
